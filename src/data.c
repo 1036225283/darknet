@@ -1446,6 +1446,50 @@ data load_cifar10_data(char *filename)
     return d;
 }
 
+data load_mnist_data(char *image_file,char *label_file,int num)
+{
+    data d = {0};
+    d.shallow = 0;
+    long i,j;
+    matrix X = make_matrix(num, 784);
+    matrix y = make_matrix(num, 10);
+    d.X = X;
+    d.y = y;
+
+    FILE *fp = fopen(image_file, "rb");
+    if(!fp) file_error(image_file);
+    fseek(fp,16,SEEK_SET);
+    for(i = 0; i < num; ++i){
+        unsigned char bytes[784];
+        fread(bytes, 1, 784, fp);
+        for(j = 0; j < X.cols; ++j){
+            X.vals[i][j] = (double)bytes[j+1];
+        }
+    }
+    fclose(fp);
+
+    fp = fopen(label_file, "rb");
+    if(!fp) file_error(label_file);
+    fseek(fp,8,SEEK_SET);
+    for(i = 0; i < num; ++i){
+        unsigned char byte;
+        fread(&byte, 1, 1, fp);
+        for(j = 0; j < y.cols; ++j){
+            if(byte==j){
+                y.vals[i][j] = 1;
+            }else{
+                y.vals[i][j] = 0;
+            }
+        }
+    }
+    fclose(fp);
+
+    scale_data_rows(d, 1./255);
+    //normalize_data_rows(d);
+    
+    return d;
+}
+
 void get_random_batch(data d, int n, float *X, float *y)
 {
     int j;
