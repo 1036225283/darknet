@@ -18,6 +18,12 @@ submission/
 cfg/
 darknet
 .fuse*
+libdarknet.a
+libdarknet.so
+yolov2-face-tiny-voc_final.weights
+yolov3-tiny.weights
+backup
+bad.list
 
 # OS Generated #
 .DS_Store*

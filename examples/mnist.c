@@ -9,9 +9,7 @@ void train_mnist(char *cfgfile, char *weightfile)
     network *net = load_network(cfgfile, weightfile, 0);
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
 
-    char *backup_directory = "
-    
-    backup/";
+    char *backup_directory = "backup/";
     int N = 50000;
 
     int epoch = (*net->seen)/N;
