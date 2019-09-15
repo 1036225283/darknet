@@ -31,7 +31,7 @@ void train_face_aliment(char *cfgfile, char *weightfile)
     args.n = imgs;
     args.m = plist->size;
     args.d = &buffer;
-    args.type = FACE_ALIMENT;
+    args.type = FACE_ALIMENT_DATA;
 
     args.angle = net->angle;
     args.exposure = net->exposure;
@@ -48,7 +48,7 @@ void train_face_aliment(char *cfgfile, char *weightfile)
         train = buffer;
         load_thread = load_data_in_thread(args);
 
-        printf("Loaded: %lf seconds\n", sec(clock()-time));
+        //printf("Loaded: %lf seconds\n", sec(clock()-time));
 
         time=clock();
         float loss = train_network(net, train);

@@ -1260,7 +1260,7 @@ void *load_thread(void *ptr)
         *(a.resized) = letterbox_image(*(a.im), a.w, a.h);
     } else if (a.type == TAG_DATA){
         *a.d = load_data_tag(a.paths, a.n, a.m, a.classes, a.min, a.max, a.size, a.angle, a.aspect, a.hue, a.saturation, a.exposure);
-    } else if (a.type == FACE_ALIMENT){
+    } else if (a.type == FACE_ALIMENT_DATA){
         *a.d = load_data_face_aliment(a.n, a.paths, a.m, a.w, a.h, a.jitter, a.hue, a.saturation, a.exposure);
     }
     free(ptr);

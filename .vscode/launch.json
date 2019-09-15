@@ -12,7 +12,7 @@
             "args": [
                 "face_aliment",
                 "train",
-                "cfg/yolov2-face-tiny-voc.cfg"
+                "cfg/face_aliment.cfg"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

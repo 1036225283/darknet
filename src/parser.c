@@ -35,6 +35,7 @@
 #include "shortcut_layer.h"
 #include "softmax_layer.h"
 #include "lstm_layer.h"
+#include "face_aliment_layer.h"
 #include "utils.h"
 
 typedef struct{
@@ -83,6 +84,7 @@ LAYER_TYPE string_to_layer_type(char * type)
             || strcmp(type, "[softmax]")==0) return SOFTMAX;
     if (strcmp(type, "[route]")==0) return ROUTE;
     if (strcmp(type, "[upsample]")==0) return UPSAMPLE;
+    if (strcmp(type, "[face_aliment]")==0) return FACE_ALIMENT;
     return BLANK;
 }
 
@@ -536,6 +538,16 @@ layer parse_batchnorm(list *options, size_params params)
     return l;
 }
 
+layer parse_face_aliment(list *options, size_params params)
+{
+    layer l = make_face_aliment_layer(params.batch, params.w, params.h, params.c);
+
+    l.jitter = option_find_float(options, "jitter", .2);
+    l.thresh = option_find_float(options, "thresh", .5);
+    l.random = option_find_int_quiet(options, "random", 0);
+    return l;
+}
+
 layer parse_shortcut(list *options, size_params params, network *net)
 {
     char *l = option_find(options, "from");
@@ -834,7 +846,10 @@ network *parse_network_cfg(char *filename)
             l.output_gpu = net->layers[count-1].output_gpu;
             l.delta_gpu = net->layers[count-1].delta_gpu;
 #endif
-        }else{
+        }else if(lt == FACE_ALIMENT){
+            l = parse_face_aliment(options, params);
+        }
+        else{
             fprintf(stderr, "Type not recognized: %s\n", s->type);
         }
         l.clip = net->clip;
