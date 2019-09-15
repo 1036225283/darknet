@@ -1464,3 +1464,24 @@ void free_image(image m)
         free(m.data);
     }
 }
+
+void draw_face_landmark(image img,matrix pts,int size,float r,float g,float b)
+{
+    int i=0,j=0;
+    for(i=0;i<68;++i){
+        for(j=2;j<size;++j){
+            draw_box(img, pts.vals[0][i*2]-j, pts.vals[0][i*2+1]-j, pts.vals[0][i*2]+j, pts.vals[0][i*2+1]+j, r, g, b);
+        }
+    }
+}
+
+void draw_face_landmark_with_truth(image img,float *truth,int size,float r,float g,float b)
+{
+    int i=0,j=0;
+    for(i=0;i<68;++i){
+        for(j=2;j<size;++j){
+            draw_box(img, truth[i*2]*img.w-j, truth[i*2+1]*img.h-j, truth[i*2]*img.w+j, truth[i*2+1]*img.h+j, r, g, b);
+        }
+    }
+}
+

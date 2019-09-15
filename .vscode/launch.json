@@ -10,9 +10,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/darknet",
             "args": [
-                "detector",
+                "face_aliment",
                 "train",
-                "cfg/voc_face.data",
                 "cfg/yolov2-face-tiny-voc.cfg"
             ],
             "stopAtEntry": false,

@@ -22,6 +22,25 @@ list *get_paths(char *filename)
     return lines;
 }
 
+list *get_paths_with_prefix(char *filename,char *prefix)
+{
+    char *path;
+    //char *prefix = "/home/javer/work/data_set/helen/trainset";
+    
+    FILE *file = fopen(filename, "r");
+    if(!file) file_error(filename);
+    list *lines = make_list();
+    while((path=fgetl(file))){
+        char *abs_path = malloc(256);
+        sprintf(abs_path,"%s/%s",prefix,path);
+        //printf("%s,%s,%s\n",prefix,path,abs_path);
+        list_insert(lines, abs_path);
+        free(path);
+    }
+    fclose(file);
+    return lines;
+}
+
 /*
 char **get_random_paths_indexes(char **paths, int n, int m, int *indexes)
 {
@@ -484,6 +503,63 @@ void fill_truth_detection(char *path, int num_boxes, float *truth, int classes, 
         truth[(i-sub)*5+4] = id;
     }
     free(boxes);
+}
+
+matrix read_face_aliment(char * path,int is_print)
+{
+    FILE *file = fopen(path, "r");
+    if(!file) file_error(path);
+    matrix matrix_pts = make_matrix(1,136);
+    
+    char* a = fgetl(file);
+    char* b = fgetl(file);
+    char* c = fgetl(file);
+    if(is_print)printf("%s\n%s\n%s\n",a,b,c);
+    int i=0;
+    for(i = 0;i<68;i++){
+        if(fscanf(file, "%f %f\n", &matrix_pts.vals[0][i*2],&matrix_pts.vals[0][i*2+1]) == 2){
+            if(is_print)printf("%f,%f\n",matrix_pts.vals[0][i*2],matrix_pts.vals[0][i*2+1]);
+        } 
+        else{
+            if(is_print)printf("read %d line error\n",i);
+        }
+    }
+    char* d = fgetl(file);
+    if(is_print)printf("%s\n",d);
+    if(a)free(a);
+    if(b)free(b);
+    if(c)free(c);
+    if(d)free(d);
+    fclose(file);
+    return matrix_pts;
+}
+
+void fill_truth_face_aliment(char *path, float *truth, int flip, float dx, float dy, float sx, float sy,int pic_w,int pic_h)
+{
+    int i=0;
+    char labelpath[4096];
+    find_replace(path, ".jpg", ".pts", labelpath);
+    find_replace(labelpath, ".png", ".pts", labelpath);
+    find_replace(labelpath, ".JPG", ".pts", labelpath);
+    find_replace(labelpath, ".JPEG", ".pts", labelpath);
+
+    matrix pts = read_face_aliment(labelpath,0);
+    for(i=0;i<68;++i){
+        pts.vals[0][i*2] = pts.vals[0][i*2]/pic_w;
+        pts.vals[0][i*2+1] = pts.vals[0][i*2+1]/pic_h;
+    }
+
+    for(i=0;i<68;++i){
+        truth[i*2] = pts.vals[0][i*2]*sx-dx;
+        truth[i*2+1] = pts.vals[0][i*2+1]*sy-dy;
+    }
+
+    if(flip){
+        for(i=0;i<68;++i){
+            truth[i*2] = 1-truth[i*2];
+        }
+    }
+    free_matrix(pts);
 }
 
 #define NUMCHARS 37
@@ -1087,6 +1163,63 @@ data load_data_detection(int n, char **paths, int m, int w, int h, int boxes, in
     return d;
 }
 
+data load_data_face_aliment(int n, char **paths, int m, int w, int h,float jitter, float hue, float saturation, float exposure)
+{
+    char **random_paths = get_random_paths(paths, n, m);
+    int i;
+    data d = {0};
+    d.shallow = 0;
+
+    d.X.rows = n;
+    d.X.vals = calloc(d.X.rows, sizeof(float*));
+    d.X.cols = h*w*3;
+
+    d.y = make_matrix(n, 136);
+    for(i = 0; i < n; ++i){
+        image orig = load_image_color(random_paths[i], 0, 0);
+        image sized = make_image(w, h, orig.c);
+        fill_image(sized, .5);
+
+        float dw = jitter * orig.w;
+        float dh = jitter * orig.h;
+
+        float new_ar = (orig.w + rand_uniform(-dw, dw)) / (orig.h + rand_uniform(-dh, dh));
+        //float scale = rand_uniform(.25, 2);
+        float scale = 1;
+
+        float nw, nh;
+
+        if(new_ar < 1){
+            nh = scale * h;
+            nw = nh * new_ar;
+        } else {
+            nw = scale * w;
+            nh = nw / new_ar;
+        }
+
+        float dx = rand_uniform(0, w - nw);
+        float dy = rand_uniform(0, h - nh);
+
+        place_image(orig, nw, nh, dx, dy, sized);
+
+        random_distort_image(sized, hue, saturation, exposure);
+
+        int flip = rand()%2;
+        if(flip) flip_image(sized);
+        d.X.vals[i] = sized.data;
+
+
+        fill_truth_face_aliment(random_paths[i], d.y.vals[i],  flip, -dx/w, -dy/h, nw/w, nh/h,orig.w,orig.h);
+
+        free_image(orig);
+
+        //draw_face_landmark_with_truth(sized,d.y.vals[i],5,0,1,0);
+        //show_image(sized,"haha",-1);
+    }
+    free(random_paths);
+    return d;
+}
+
 void *load_thread(void *ptr)
 {
     //printf("Loading data: %d\n", rand());
@@ -1127,6 +1260,8 @@ void *load_thread(void *ptr)
         *(a.resized) = letterbox_image(*(a.im), a.w, a.h);
     } else if (a.type == TAG_DATA){
         *a.d = load_data_tag(a.paths, a.n, a.m, a.classes, a.min, a.max, a.size, a.angle, a.aspect, a.hue, a.saturation, a.exposure);
+    } else if (a.type == FACE_ALIMENT){
+        *a.d = load_data_face_aliment(a.n, a.paths, a.m, a.w, a.h, a.jitter, a.hue, a.saturation, a.exposure);
     }
     free(ptr);
     return 0;

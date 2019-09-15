@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "darknet.h": "c",
+        "image.h": "c",
+        "list.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
+}

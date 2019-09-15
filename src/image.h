@@ -60,7 +60,8 @@ image make_empty_image(int w, int h, int c);
 void copy_image_into(image src, image dest);
 
 image get_image_layer(image m, int l);
-
+void draw_face_landmark(image img,matrix pts,int size,float r,float g,float b);
+void draw_face_landmark_with_truth(image img,float *truth,int size,float r,float g,float b);
 #ifdef __cplusplus
 }
 #endif

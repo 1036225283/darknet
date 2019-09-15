@@ -19,7 +19,7 @@ static inline float distance_from_edge(int x, int max)
     return dist;
 }
 void load_data_blocking(load_args args);
-
+list *get_paths_with_prefix(char *filename,char *prefix);
 
 void print_letters(float *pred, int n);
 data load_data_captcha(char **paths, int n, int m, int k, int w, int h);
@@ -31,6 +31,7 @@ data load_data_super(char **paths, int n, int m, int w, int h, int scale);
 data load_data_augment(char **paths, int n, int m, char **labels, int k, tree *hierarchy, int min, int max, int size, float angle, float aspect, float hue, float saturation, float exposure, int center);
 data load_data_regression(char **paths, int n, int m, int classes, int min, int max, int size, float angle, float aspect, float hue, float saturation, float exposure);
 data load_go(char *filename);
+data load_data_face_aliment(int n, char **paths, int m, int w, int h,float jitter, float hue, float saturation, float exposure);
 
 
 data load_data_writing(char **paths, int n, int m, int w, int h, int out_w, int out_h);

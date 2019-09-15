@@ -22,6 +22,7 @@ extern void run_art(int argc, char **argv);
 extern void run_super(int argc, char **argv);
 extern void run_lsd(int argc, char **argv);
 extern void run_mnist(int argc, char **argv);
+extern void run_face_aliment(int argc, char **argv);
 
 void average(int argc, char *argv[])
 {
@@ -498,6 +499,8 @@ int main(int argc, char **argv)
         test_resize(argv[2]);
     } else if (0 == strcmp(argv[1],"mnist")){
         run_mnist(argc,argv);
+    }else if (0 == strcmp(argv[1],"face_aliment")){
+        run_face_aliment(argc,argv);
     }else {
         fprintf(stderr, "Not an option: %s\n", argv[1]);
     }
