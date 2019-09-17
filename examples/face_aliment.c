@@ -69,9 +69,32 @@ void train_face_aliment(char *cfgfile, char *weightfile)
 }
 
 
-void test_face_aliment(char *filename, char *weightfile)
+void test_face_aliment(char *filename, char *weightfile,char *pic_path)
 {
-  
+    int w=416,h=416;
+    char *base = basecfg(cfgfile);
+    printf("%s\n", base);
+    network *net = load_network(cfgfile, weightfile, 0);
+    image orig = load_image_color(random_paths[i], 0, 0);
+    image sized = make_image(w, h, orig.c);
+    fill_image(sized, .5);
+
+    float new_ar = orig.w /orig.h;
+    float scale = 1;
+    float nw, nh;
+    if(new_ar < 1){
+        nh = scale * h;
+        nw = nh * new_ar;
+    } else {
+        nw = scale * w;
+        nh = nw / new_ar;
+    }
+    float dx = (w-nw)/2;
+    float dy = (h-nh)/2;
+    place_image(orig, nw, nh, dx, dy, sized);
+    float* result = network_predict(net,sized.data);
+
+    //parse and show result
 }
 
 

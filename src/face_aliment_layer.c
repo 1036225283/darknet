@@ -62,8 +62,9 @@ void cost_and_delta(face_aliment_layer l,network net)
     int index_x=0,index_y=0;
     int truth_start_index=0;
     int batch_index = 0;
-    int i=0;
+    int i=0,j=0;
     int b=0;
+
     for(b=0;b<l.batch;++b){
         for(i=0;i<68;++i){
             center_x += net.truth[i*2+b*l.c];
@@ -73,26 +74,30 @@ void cost_and_delta(face_aliment_layer l,network net)
         center_y /= 68;
         index_x = (int)(center_x*l.w);
         index_y = (int)(center_y*l.h);
-        //printf("%d,%d\n",index_x,index_y);
-        //cost
-        truth_start_index = (index_y*l.w+index_x)*l.c+b*l.c;
-        batch_index = b*l.inputs;
-        for(i=0;i<truth_start_index;++i){
-            l.cost[0] += 0.5f*l.output[i+batch_index]*l.output[i+batch_index];
-            l.delta[i+batch_index] = 0-l.output[i+batch_index];
-        }
-        for(i=truth_start_index;i<truth_start_index+l.c;++i){
-            if(i==truth_start_index){
-                l.delta[i+batch_index] = 1-l.output[i+batch_index];
-                l.cost[0] += 0.5f*(l.output[i+batch_index]-1)*(l.output[i+batch_index]-1);
-            }else{
-                l.cost[0] += 0.5f*(l.output[i+batch_index]-net.truth[i-truth_start_index-1+b*l.c])*(l.output[i+batch_index]-net.truth[i-truth_start_index-1+b*l.c]);
-                l.delta[i+batch_index] = net.truth[i-truth_start_index-1+b*l.c]-l.output[i+batch_index];
+        float *truth = net.truth+b*136;
+        for(i=0;i<137;++i){
+            float *data = l.output+i*l.w*l.h+b*l.outputs;
+            float *diff = l.delta+i*l.w*l.h+b*l.outputs;
+            //printf("i is %d,%d,%d,%d,%d\n",i,l.w,l.h,b,l.outputs);
+            for(j=0;j<l.w*l.h;++j){
+                if((index_y*l.w+index_x)==j){
+                    if(i==0){
+                        diff[j] = 1-data[j];
+                        l.cost[0] += 0.5f*diff[j]*diff[j];
+                    }else{
+                        if(i%2==0){
+                            diff[j] = truth[i-1]*l.h-data[j];
+                            l.cost[0] += 0.5f*diff[j]*diff[j];
+                        }else{
+                            diff[j] = truth[i-1]*l.w-data[j];
+                            l.cost[0] += 0.5f*diff[j]*diff[j];
+                        }
+                    }
+                }else{
+                    diff[j] = 0-data[j];
+                    l.cost[0] += 0.5f*diff[j]*diff[j];
+                }
             }
-        }
-        for(i=truth_start_index+l.c;i<l.inputs;++i){
-            l.cost[0] += 0.5f*l.output[i+batch_index]*l.output[i+batch_index];
-            l.delta[i+batch_index] = 0-l.output[i+batch_index];
         }
     }
     
@@ -102,13 +107,13 @@ void cost_and_delta(face_aliment_layer l,network net)
 void forward_face_aliment_layer(face_aliment_layer l, network net)
 {
     memcpy(l.output, net.input, l.inputs*l.batch*sizeof(float));
-    activate_array(l.output, l.inputs*l.batch, LOGISTIC);
+    activate_array(l.output, l.w*l.h, LOGISTIC);
 }
 
 void backward_face_aliment_layer(face_aliment_layer l, network net)
 {
     cost_and_delta(l,net);
-    gradient_array(l.output, l.inputs*l.batch, LOGISTIC, l.delta);
+    gradient_array(l.output, l.w*l.h, LOGISTIC, l.delta);
     axpy_cpu(l.batch*l.inputs, 1, l.delta, 1, net.delta, 1);
 }
 
@@ -117,7 +122,7 @@ void backward_face_aliment_layer(face_aliment_layer l, network net)
 void forward_face_aliment_layer_gpu(face_aliment_layer l, network net)
 {
     copy_gpu(l.batch*l.inputs, net.input_gpu, 1, l.output_gpu, 1);
-    activate_array_gpu(l.output_gpu, l.inputs*l.batch, LOGISTIC);
+    activate_array_gpu(l.output_gpu, l.w*l.h, LOGISTIC);
     cuda_pull_array(l.output_gpu, l.output, l.batch*l.inputs);
 }
 
@@ -125,7 +130,7 @@ void backward_face_aliment_layer_gpu(face_aliment_layer l, network net)
 {
     cost_and_delta(l,net);
     cuda_push_array(l.delta_gpu, l.delta, l.batch*l.inputs);
-    gradient_array_gpu(l.output_gpu, l.inputs*l.batch, LOGISTIC, l.delta_gpu);
+    gradient_array_gpu(l.output_gpu, l.w*l.h, LOGISTIC, l.delta_gpu);
     axpy_gpu(l.batch*l.inputs, 1, l.delta_gpu, 1, net.delta_gpu, 1);
 }
 
