@@ -3,7 +3,8 @@
         "darknet.h": "c",
         "image.h": "c",
         "list.h": "c",
-        "face_aliment_layer.h": "c"
+        "face_aliment_layer.h": "c",
+        "random": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

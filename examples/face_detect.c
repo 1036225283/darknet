@@ -3,7 +3,7 @@
 #include "data.h"
 #include "list.h"
 
-void train_face_aliment(char *cfgfile, char *weightfile)
+void train_face_detect(char *cfgfile, char *weightfile)
 {
     char *train_images = "/home/javer/work/data_set/helen/trainset/train.txt";
     char *backup_directory = "/home/javer/work/data_set/helen/";
@@ -69,7 +69,7 @@ void train_face_aliment(char *cfgfile, char *weightfile)
 }
 
 
-void test_face_aliment(char *filename, char *weightfile,char *pic_path)
+void test_face_detect(char *filename, char *weightfile,char *pic_path)
 {
     int w=416,h=416;
     char *base = basecfg(filename);
@@ -98,78 +98,13 @@ void test_face_aliment(char *filename, char *weightfile,char *pic_path)
 }
 
 
-image read_img()
-{
-    int w = 416;
-    int h = 416;
-    float hue = 0;
-    float saturation = 1;
-    float exposure = 1;
-    image orig = load_image_color("/home/javer/work/data_set/helen/trainset/10405146_1.jpg", 0, 0);
-    image sized = make_image(w, h, orig.c);
-    fill_image(sized, .5);
 
-    float new_ar = orig.w /(float)orig.h;
-    //float scale = rand_uniform(.25, 2);
-    float scale = 1;
-
-    float nw, nh;
-
-    if(new_ar < 1){
-        nh = scale * h;
-        nw = nh * new_ar;
-    } else {
-        nw = scale * w;
-        nh = nw / new_ar;
-    }
-
-    float dx =  (w - nw)/2;
-    float dy =  (h - nh)/2;
-
-    place_image(orig, nw, nh, dx, dy, sized);
-
-    random_distort_image(sized, hue, saturation, exposure);
-    //show_image(sized,"tttt.png",-1);
-    return orig;
-}
-
-matrix read_pts(int is_print)
-{
-    char *labelpath = "/home/javer/work/data_set/helen/trainset/10405146_1.pts";
-    FILE *file = fopen(labelpath, "r");
-    if(!file) file_error(labelpath);
-    matrix matrix_pts = make_matrix(1,136);
-    
-    char* a = fgetl(file);
-    char* b = fgetl(file);
-    char* c = fgetl(file);
-    if(is_print)printf("%s\n%s\n%s\n",a,b,c);
-    int i=0;
-    for(i = 0;i<68;i++){
-        if(fscanf(file, "%f %f\n", &matrix_pts.vals[0][i*2],&matrix_pts.vals[0][i*2+1]) == 2){
-            if(is_print)printf("%f,%f\n",matrix_pts.vals[0][i*2],matrix_pts.vals[0][i*2+1]);
-        } 
-        else{
-            if(is_print)printf("read %d line error\n",i);
-        }
-    }
-    char* d = fgetl(file);
-    if(is_print)printf("%s\n",d);
-    if(a)free(a);
-    if(b)free(b);
-    if(c)free(c);
-    if(d)free(d);
-    fclose(file);
-    return matrix_pts;
-}
-
-
-void run_face_aliment(int argc, char **argv)
+void run_face_detect(int argc, char **argv)
 {
     char *cfg = argv[3];
     char *weights = (argc > 4) ? argv[4] : 0;
     char *pic_path = (argc > 5) ? argv[5] : 0;
-    if(0==strcmp(argv[2], "test")) test_face_aliment(cfg, weights, pic_path);
-    else if(0==strcmp(argv[2], "train")) train_face_aliment(cfg, weights);
+    if(0==strcmp(argv[2], "test")) test_face_detect(cfg, weights, pic_path);
+    else if(0==strcmp(argv[2], "train")) train_face_detect(cfg, weights);
 }
 

@@ -548,6 +548,16 @@ layer parse_face_aliment(list *options, size_params params)
     return l;
 }
 
+layer parse_face_detect(list *options, size_params params)
+{
+    layer l = make_face_aliment_layer(params.batch, params.w, params.h, params.c);
+
+    l.jitter = option_find_float(options, "jitter", .2);
+    l.thresh = option_find_float(options, "thresh", .5);
+    l.random = option_find_int_quiet(options, "random", 0);
+    return l;
+}
+
 layer parse_shortcut(list *options, size_params params, network *net)
 {
     char *l = option_find(options, "from");
@@ -848,6 +858,8 @@ network *parse_network_cfg(char *filename)
 #endif
         }else if(lt == FACE_ALIMENT){
             l = parse_face_aliment(options, params);
+        }else if(lt == FACE_DETECT){
+            l = parse_face_detect(options, params);
         }
         else{
             fprintf(stderr, "Type not recognized: %s\n", s->type);

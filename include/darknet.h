@@ -88,7 +88,8 @@ typedef enum {
     LOGXENT,
     L2NORM,
     BLANK,
-    FACE_ALIMENT
+    FACE_ALIMENT,
+    FACE_DETECT
 } LAYER_TYPE;
 
 typedef enum{
