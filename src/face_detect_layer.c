@@ -303,9 +303,8 @@ void get_face_detect_detections(layer l, int w, int h, float thresh, detection *
             int index = n*l.w*l.h + i;
             int obj_index  = entry_index(l, 0, n*l.w*l.h + i, 4);
             int box_index  = entry_index(l, 0, n*l.w*l.h + i, 0);
-            float scale = l.background ? 1 : predictions[obj_index];
             dets[index].bbox = get_face_detect_box(predictions, n, box_index, col, row, l.w, l.h, l.w*l.h);
-            dets[index].objectness = scale > thresh ? scale : 0;
+            dets[index].objectness = predictions[obj_index];
         }
     }
     correct_face_detect_boxes(dets, l.w*l.h*l.n, w, h, w, h, 0);
