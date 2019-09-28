@@ -55,7 +55,7 @@ void train_face_detect(char *cfgfile, char *weightfile)
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
-        printf("%d: %f, %f avg, %f rate, %lf seconds, %d images\n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
+        printf("%d, loss: %f, avg: %f, rate: %f, seconds: %lf, images: %d \n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
         if(i%1000==0 || (i < 1000 && i%100 == 0)){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights", backup_directory, base, i);
@@ -76,25 +76,31 @@ void test_face_detect(char *filename, char *weightfile,char *pic_path)
     printf("%s\n", base);
     network *net = load_network(filename, weightfile, 0);
     image orig = load_image_color(pic_path, 0, 0);
-    image sized = make_image(w, h, orig.c);
-    fill_image(sized, .5);
+    image sized = letterbox_image(orig, net->w, net->h);
 
-    float new_ar = orig.w /orig.h;
-    float scale = 1;
-    float nw, nh;
-    if(new_ar < 1){
-        nh = scale * h;
-        nw = nh * new_ar;
-    } else {
-        nw = scale * w;
-        nh = nw / new_ar;
-    }
-    float dx = (w-nw)/2;
-    float dy = (h-nh)/2;
-    place_image(orig, nw, nh, dx, dy, sized);
     float* result = network_predict(net,sized.data);
 
     //parse and show result
+    int nboxes = 0;
+    float thresh = 0.01;
+    detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, 0, 0, 1, &nboxes);
+    printf("%d\n", nboxes);
+    //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
+    do_nms_sort(dets, nboxes, 0, thresh);
+    for(int i=0;i<nboxes;i++){
+        printf("%f\n",dets[i].objectness);
+        if(dets[i].objectness > thresh){
+            box tmpb = dets[i].bbox;
+            draw_box(sized,tmpb.x, tmpb.y, tmpb.x+tmpb.w,tmpb.y+tmpb.h, 1, 0, 0);
+        }
+    }
+    
+    free_detections(dets, nboxes);
+
+#ifdef OPENCV
+    make_window("predictions", 416, 416, 0);
+    show_image(sized, "predictions", 0);
+#endif
 }
 
 

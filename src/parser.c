@@ -36,6 +36,7 @@
 #include "softmax_layer.h"
 #include "lstm_layer.h"
 #include "face_aliment_layer.h"
+#include "face_detect_layer.h"
 #include "utils.h"
 
 typedef struct{
@@ -85,6 +86,7 @@ LAYER_TYPE string_to_layer_type(char * type)
     if (strcmp(type, "[route]")==0) return ROUTE;
     if (strcmp(type, "[upsample]")==0) return UPSAMPLE;
     if (strcmp(type, "[face_aliment]")==0) return FACE_ALIMENT;
+    if (strcmp(type, "[face_detect]")==0) return FACE_DETECT;
     return BLANK;
 }
 
@@ -540,21 +542,27 @@ layer parse_batchnorm(list *options, size_params params)
 
 layer parse_face_aliment(list *options, size_params params)
 {
-    layer l = make_face_aliment_layer(params.batch, params.w, params.h, params.c);
+    int num = option_find_int(options, "num", 1);
+    layer l = make_face_aliment_layer(params.batch, params.w, params.h, num);
 
     l.jitter = option_find_float(options, "jitter", .2);
     l.thresh = option_find_float(options, "thresh", .5);
     l.random = option_find_int_quiet(options, "random", 0);
+    l.object_scale = option_find_float(options, "object_scale", 1);
+    l.noobject_scale = option_find_float(options, "noobject_scale", 1);
     return l;
 }
 
 layer parse_face_detect(list *options, size_params params)
 {
-    layer l = make_face_aliment_layer(params.batch, params.w, params.h, params.c);
+    int num = option_find_int(options, "num", 1);
+    layer l = make_face_detect_layer(params.batch, params.w, params.h, num);
 
     l.jitter = option_find_float(options, "jitter", .2);
     l.thresh = option_find_float(options, "thresh", .5);
     l.random = option_find_int_quiet(options, "random", 0);
+    l.object_scale = option_find_float(options, "object_scale", 1);
+    l.noobject_scale = option_find_float(options, "noobject_scale", 1);
     return l;
 }
 

@@ -172,7 +172,7 @@ void forward_face_aliment_layer(face_aliment_layer l, network net)
 void backward_face_aliment_layer(face_aliment_layer l, network net)
 {
     cost_and_delta(l,net);
-    gradient_array(l.output, l.w*l.h*3, LOGISTIC, l.delta);
+    gradient_array(l.output, l.w*l.h*2, LOGISTIC, l.delta);
     gradient_array(l.output, l.w*l.h*136, TANH, l.delta);
     axpy_cpu(l.batch*l.inputs, 1, l.delta, 1, net.delta, 1);
 }

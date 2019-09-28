@@ -552,6 +552,9 @@ void fill_truth_face_aliment(char *path, float *truth, int flip, float dx, float
     for(i=0;i<68;++i){
         truth[i*2] = pts.vals[0][i*2]*sx-dx;
         truth[i*2+1] = pts.vals[0][i*2+1]*sy-dy;
+        if(truth[i*2]==0.0 || truth[i*2+1]==0.0){
+            printf("%s truth error\n",path);
+        }
     }
 
     if(flip){

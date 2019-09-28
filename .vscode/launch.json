@@ -10,9 +10,11 @@
             "request": "launch",
             "program": "${workspaceFolder}/darknet",
             "args": [
-                "face_aliment",
-                "train",
-                "cfg/face_aliment.cfg"
+                "face_detect",
+                "test",
+                "cfg/face_detect.cfg",
+                "~/work/data_set/helen/face_detect_4000.weights",
+                "data/scream.jpg"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

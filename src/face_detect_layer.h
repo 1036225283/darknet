@@ -1,11 +1,11 @@
-#ifndef REGION_LAYER_H
-#define REGION_LAYER_H
+#ifndef FACE_DETECT_LAYER_H
+#define FACE_DETECT_LAYER_H
 
 #include "darknet.h"
 #include "layer.h"
 #include "network.h"
 
-layer make_face_detect_layer(int batch, int w, int h, int n, int classes, int coords);
+layer make_face_detect_layer(int batch, int w, int h, int n);
 void forward_face_detect_layer(const layer l, network net);
 void backward_face_detect_layer(const layer l, network net);
 void resize_face_detect_layer(layer *l, int w, int h);

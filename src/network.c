@@ -516,7 +516,7 @@ int num_detections(network *net, float thresh)
         if(l.type == YOLO){
             s += yolo_num_detections(l, thresh);
         }
-        if(l.type == DETECTION || l.type == REGION){
+        if(l.type == DETECTION || l.type == REGION || l.type == FACE_ALIMENT || l.type == FACE_DETECT){
             s += l.w*l.h*l.n;
         }
     }
@@ -554,6 +554,10 @@ void fill_network_boxes(network *net, int w, int h, float thresh, float hier, in
         }
         if(l.type == DETECTION){
             get_detection_detections(l, w, h, thresh, dets);
+            dets += l.w*l.h*l.n;
+        }
+        if(l.type == FACE_DETECT){
+            get_face_detect_detections(l, w, h, thresh, dets);
             dets += l.w*l.h*l.n;
         }
     }
