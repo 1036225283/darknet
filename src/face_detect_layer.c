@@ -273,29 +273,6 @@ void get_face_detect_detections(layer l, int w, int h, float thresh, detection *
 {
     int i,j,n,z;
     float *predictions = l.output;
-    if (l.batch == 2) {
-        float *flip = l.output + l.outputs;
-        for (j = 0; j < l.h; ++j) {
-            for (i = 0; i < l.w/2; ++i) {
-                for (n = 0; n < l.n; ++n) {
-                    for(z = 0; z < 5; ++z){
-                        int i1 = z*l.w*l.h*l.n + n*l.w*l.h + j*l.w + i;
-                        int i2 = z*l.w*l.h*l.n + n*l.w*l.h + j*l.w + (l.w - i - 1);
-                        float swap = flip[i1];
-                        flip[i1] = flip[i2];
-                        flip[i2] = swap;
-                        if(z == 0){
-                            flip[i1] = -flip[i1];
-                            flip[i2] = -flip[i2];
-                        }
-                    }
-                }
-            }
-        }
-        for(i = 0; i < l.outputs; ++i){
-            l.output[i] = (l.output[i] + flip[i])/2.;
-        }
-    }
     for (i = 0; i < l.w*l.h; ++i){
         int row = i / l.w;
         int col = i % l.w;
@@ -305,9 +282,15 @@ void get_face_detect_detections(layer l, int w, int h, float thresh, detection *
             int box_index  = entry_index(l, 0, n*l.w*l.h + i, 0);
             dets[index].bbox = get_face_detect_box(predictions, n, box_index, col, row, l.w, l.h, l.w*l.h);
             dets[index].objectness = predictions[obj_index];
+            dets[index].bbox.x *= w;
+            dets[index].bbox.y *= h;
+            dets[index].bbox.w *= w;
+            dets[index].bbox.h *= h;
+            dets[index].bbox.x -= dets[index].bbox.w/2;
+            dets[index].bbox.y -= dets[index].bbox.h/2;
+            dets[index].sort_class = 0;
         }
     }
-    correct_face_detect_boxes(dets, l.w*l.h*l.n, w, h, w, h, 0);
 }
 
 #ifdef GPU

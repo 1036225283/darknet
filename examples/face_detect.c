@@ -82,13 +82,13 @@ void test_face_detect(char *filename, char *weightfile,char *pic_path)
 
     //parse and show result
     int nboxes = 0;
-    float thresh = 0.01;
+    float thresh = 0.3;
     detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, 0, 0, 1, &nboxes);
-    printf("%d\n", nboxes);
+    //printf("%d\n", nboxes);
     //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
-    do_nms_sort(dets, nboxes, 0, thresh);
+    do_nms_sort_simple(dets, nboxes, 0.2);
     for(int i=0;i<nboxes;i++){
-        printf("%f\n",dets[i].objectness);
+        //printf("%f\n",dets[i].objectness);
         if(dets[i].objectness > thresh){
             box tmpb = dets[i].bbox;
             draw_box(sized,tmpb.x, tmpb.y, tmpb.x+tmpb.w,tmpb.y+tmpb.h, 1, 0, 0);

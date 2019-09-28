@@ -88,6 +88,26 @@ void do_nms_sort(detection *dets, int total, int classes, float thresh)
     }
 }
 
+void do_nms_sort_simple(detection *dets, int total, float thresh)
+{
+    int i, j;
+    qsort(dets, total, sizeof(detection), nms_comparator);
+    for(i = 0; i < total; ++i){
+        box a = dets[i].bbox;
+        for(j = i+1; j < total; ++j){
+            box b = dets[j].bbox;
+            if (box_iou(a, b) > thresh){
+                if(dets[i].objectness > dets[j].objectness){
+                    dets[j].objectness = 0;
+                }else{
+                    dets[i].objectness = 0;
+                }
+                
+            }
+        }
+    }
+}
+
 box float_to_box(float *f, int stride)
 {
     box b = {0};
