@@ -527,6 +527,12 @@ typedef struct detection{
     int sort_class;
 } detection;
 
+typedef struct aliment{
+    box bbox;
+    float objectness;
+    float *landmarks;
+} aliment;
+
 typedef struct matrix{
     int rows, cols;
     float **vals;

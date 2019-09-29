@@ -55,7 +55,7 @@ void train_face_aliment(char *cfgfile, char *weightfile)
         if (avg_loss < 0) avg_loss = loss;
         avg_loss = avg_loss*.9 + loss*.1;
 
-        printf("%d: %f, %f avg, %f rate, %lf seconds, %d images\n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
+        printf("%d, loss: %f, avg: %f, rate: %f, seconds: %lf, images: %d \n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
         if(i%1000==0 || (i < 1000 && i%100 == 0)){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights", backup_directory, base, i);
@@ -76,92 +76,33 @@ void test_face_aliment(char *filename, char *weightfile,char *pic_path)
     printf("%s\n", base);
     network *net = load_network(filename, weightfile, 0);
     image orig = load_image_color(pic_path, 0, 0);
-    image sized = make_image(w, h, orig.c);
-    fill_image(sized, .5);
+    image sized = letterbox_image(orig, net->w, net->h);
 
-    float new_ar = orig.w /orig.h;
-    float scale = 1;
-    float nw, nh;
-    if(new_ar < 1){
-        nh = scale * h;
-        nw = nh * new_ar;
-    } else {
-        nw = scale * w;
-        nh = nw / new_ar;
-    }
-    float dx = (w-nw)/2;
-    float dy = (h-nh)/2;
-    place_image(orig, nw, nh, dx, dy, sized);
     float* result = network_predict(net,sized.data);
 
     //parse and show result
-}
-
-
-image read_img()
-{
-    int w = 416;
-    int h = 416;
-    float hue = 0;
-    float saturation = 1;
-    float exposure = 1;
-    image orig = load_image_color("/home/javer/work/data_set/helen/trainset/10405146_1.jpg", 0, 0);
-    image sized = make_image(w, h, orig.c);
-    fill_image(sized, .5);
-
-    float new_ar = orig.w /(float)orig.h;
-    //float scale = rand_uniform(.25, 2);
-    float scale = 1;
-
-    float nw, nh;
-
-    if(new_ar < 1){
-        nh = scale * h;
-        nw = nh * new_ar;
-    } else {
-        nw = scale * w;
-        nh = nw / new_ar;
-    }
-
-    float dx =  (w - nw)/2;
-    float dy =  (h - nh)/2;
-
-    place_image(orig, nw, nh, dx, dy, sized);
-
-    random_distort_image(sized, hue, saturation, exposure);
-    //show_image(sized,"tttt.png",-1);
-    return orig;
-}
-
-matrix read_pts(int is_print)
-{
-    char *labelpath = "/home/javer/work/data_set/helen/trainset/10405146_1.pts";
-    FILE *file = fopen(labelpath, "r");
-    if(!file) file_error(labelpath);
-    matrix matrix_pts = make_matrix(1,136);
-    
-    char* a = fgetl(file);
-    char* b = fgetl(file);
-    char* c = fgetl(file);
-    if(is_print)printf("%s\n%s\n%s\n",a,b,c);
-    int i=0;
-    for(i = 0;i<68;i++){
-        if(fscanf(file, "%f %f\n", &matrix_pts.vals[0][i*2],&matrix_pts.vals[0][i*2+1]) == 2){
-            if(is_print)printf("%f,%f\n",matrix_pts.vals[0][i*2],matrix_pts.vals[0][i*2+1]);
-        } 
-        else{
-            if(is_print)printf("read %d line error\n",i);
+    int nboxes = 0;
+    float thresh = 0.3;
+    detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, 0, 0, 1, &nboxes);
+    //printf("%d\n", nboxes);
+    //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
+    do_nms_sort_simple(dets, nboxes, 0.2);
+    for(int i=0;i<nboxes;i++){
+        //printf("%f\n",dets[i].objectness);
+        if(dets[i].objectness > thresh){
+            box tmpb = dets[i].bbox;
+            draw_box(sized,tmpb.x, tmpb.y, tmpb.x+tmpb.w,tmpb.y+tmpb.h, 1, 0, 0);
         }
     }
-    char* d = fgetl(file);
-    if(is_print)printf("%s\n",d);
-    if(a)free(a);
-    if(b)free(b);
-    if(c)free(c);
-    if(d)free(d);
-    fclose(file);
-    return matrix_pts;
+    
+    free_detections(dets, nboxes);
+
+#ifdef OPENCV
+    make_window("predictions", 416, 416, 0);
+    show_image(sized, "predictions", 0);
+#endif
 }
+
 
 
 void run_face_aliment(int argc, char **argv)
