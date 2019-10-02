@@ -10,6 +10,85 @@
 #include <string.h>
 #include <stdlib.h>
 
+float mean_face[136] = {
+33.804645,254.110581,
+24.828385,321.883007,
+24.966024,385.002085,
+24.837518,449.298785,
+43.955926,517.287291,
+82.574868,581.897947,
+136.014662,637.867487,
+189.439419,650.000000,
+255.345274,650.000000,
+320.895147,650.000000,
+381.728389,648.363190,
+436.455607,604.859565,
+485.363802,552.548802,
+515.619310,486.445154,
+527.985304,412.484897,
+547.918082,351.894614,
+567.505349,285.355434,
+63.031400,52.956573,
+113.658854,39.178980,
+157.557156,142.142540,
+199.706898,152.287632,
+238.196058,170.799454,
+333.125262,180.674684,
+388.711038,160.716224,
+443.572919,155.943473,
+499.025605,176.112547,
+538.515018,210.186993,
+288.373759,237.332352,
+285.876935,281.088279,
+283.340123,326.021383,
+280.132372,372.234827,
+217.449309,417.084840,
+243.330639,427.143070,
+272.823794,435.902874,
+297.900894,433.055153,
+325.894801,428.972811,
+102.791086,225.196437,
+137.207702,205.251399,
+175.690051,209.143341,
+206.363673,239.010569,
+173.665494,241.119953,
+133.376867,238.531781,
+360.573913,250.013491,
+399.556775,226.032480,
+438.245334,227.357070,
+469.917430,250.564920,
+441.106139,258.554944,
+401.890674,256.897183,
+155.854935,513.352531,
+189.857498,494.585351,
+229.896687,487.347782,
+263.294495,497.282919,
+300.585772,492.122032,
+341.598192,511.824767,
+371.996314,533.328396,
+337.191773,555.633942,
+297.602505,563.874504,
+258.342426,563.064762,
+222.007195,557.179383,
+184.876192,544.612329,
+166.321209,517.667785,
+227.819962,512.859487,
+261.491668,522.472379,
+300.646528,520.578138,
+360.225299,534.689153,
+300.646528,520.578138,
+261.491668,522.472379,
+227.819962,512.859487,
+};
+
+void norm_mean_face(int w,int h)
+{
+    for(int i=0;i<68;i++){
+        mean_face[i*2] = mean_face[i*2]/w;
+        mean_face[i*2+1] = mean_face[i*2+1]/h;
+    }
+}
+
 layer make_face_aliment_layer(int batch, int w, int h, int n)
 {
     layer l = {0};
@@ -41,6 +120,7 @@ layer make_face_aliment_layer(int batch, int w, int h, int n)
 
     fprintf(stderr, "face_aliment\n");
     srand(0);
+    norm_mean_face(589,650);
 
     return l;
 }
@@ -140,17 +220,17 @@ static box get_truth_box(float *y,int points)
     return b;
 }
 
-static float delta_face_landmars(box fbox, float *truth, float *pred, float *delta, int index, int stride)
+static float delta_face_landmars(box fbox, float *truth, float *pred, float *delta, int index, int stride, float scale)
 {
     int i;
     float diff = 0;
     for(i=0;i<68;++i){
         float tx = 2*(truth[i*2]-fbox.x)/fbox.w;
         float ty = 2*(truth[i*2+1]-fbox.y)/fbox.h;
-        //printf("tx=%f,ty=%f\n",tx,ty);
-        delta[index + (i*2)*stride] = tx - pred[index + (i*2)*stride];
-        delta[index + (i*2+1)*stride] = ty - pred[index + (i*2+1)*stride];
-        diff += delta[index + (i*2)*stride]*delta[index + (i*2)*stride] + 0.5*delta[index + (i*2+1)*stride]*delta[index + (i*2+1)*stride];
+        //printf("tx=%f,ty=%f,box: %f,%f,%f,%f,truth: %f,%f\n",tx,ty,fbox.x,fbox.y,fbox.w,fbox.h,truth[i*2],truth[i*2+1]);
+        delta[index + (i*2)*stride] = scale*(tx - pred[index + (i*2)*stride]);
+        delta[index + (i*2+1)*stride] = scale*(ty - pred[index + (i*2+1)*stride]);
+        diff += 0.5*delta[index + (i*2)*stride]*delta[index + (i*2)*stride] + 0.5*delta[index + (i*2+1)*stride]*delta[index + (i*2+1)*stride];
     }
     return diff;
 }
@@ -199,13 +279,16 @@ void forward_face_aliment_layer(const layer l, network net)
                         l.delta[obj_index] = 0;
                     }
                     if(*(net.seen) < 1000){
+                        box mean = get_truth_box(mean_face,68);
                         box truth = {0};
                         truth.x = (i + .5)/l.w;
                         truth.y = (j + .5)/l.h;
-                        truth.w = l.w/2;
-                        truth.h = l.h/2;
+                        truth.w = mean.w;
+                        truth.h = mean.h;
                         int box_index = entry_index(l, b, n*l.w*l.h + j*l.w + i, 0);
-                        delta_face_detect_box(truth, l.output, n, box_index, i, j, l.w, l.h, l.delta, 0.1, l.w*l.h);
+                        delta_face_detect_box(truth, l.output, n, box_index, i, j, l.w, l.h, l.delta, 0.01, l.w*l.h);
+                        int landmarks_index = entry_index(l, b, n*l.w*l.h + j*l.w + i, 5);
+                        delta_face_landmars(truth, mean_face, l.output, l.delta, landmarks_index,l.w*l.h,0.01);
                     }
                 }
             }
@@ -241,7 +324,7 @@ void forward_face_aliment_layer(const layer l, network net)
         avg_obj += l.output[obj_index];
         l.delta[obj_index] = l.object_scale*(1 - l.output[obj_index]);
         int landmarks_index = entry_index(l, b, best_n*l.w*l.h + j*l.w + i, 5);
-        float diff = delta_face_landmars(truth, net.truth, l.output, l.delta, landmarks_index,l.w*l.h);
+        float diff = delta_face_landmars(truth, net.truth+b*136, l.output, l.delta, landmarks_index,l.w*l.h,1);
         avg_landmark_diff += diff;
         ++count;
     }
@@ -272,8 +355,8 @@ void get_face_aliment_detections(layer l, int w, int h, float thresh, detection 
         int col = i % l.w;
         for(n = 0; n < l.n; ++n){
             int index = n*l.w*l.h + i;
-            int obj_index  = entry_index(l, 0, n*l.w*l.h + i, 4);
-            int box_index  = entry_index(l, 0, n*l.w*l.h + i, 0);
+            int obj_index  = entry_index(l, 0, index, 4);
+            int box_index  = entry_index(l, 0, index, 0);
             dets[index].bbox = get_face_detect_box(predictions, n, box_index, col, row, l.w, l.h, l.w*l.h);
             dets[index].objectness = predictions[obj_index];
             dets[index].bbox.x *= w;
@@ -283,6 +366,17 @@ void get_face_aliment_detections(layer l, int w, int h, float thresh, detection 
             dets[index].bbox.x -= dets[index].bbox.w/2;
             dets[index].bbox.y -= dets[index].bbox.h/2;
             dets[index].sort_class = 0;
+            for(int i=0;i<68;i++){
+                int landmark_index  = entry_index(l, 0, index, (2*i)+5);
+                dets[index].aliment[2*i] = predictions[landmark_index];
+                dets[index].aliment[2*i] *= w;
+                dets[index].aliment[2*i] += dets[index].bbox.x;
+                landmark_index  = entry_index(l, 0, index, (2*i+1)+5);
+                dets[index].aliment[2*i+1] = predictions[landmark_index];
+                dets[index].aliment[2*i+1] *= h;
+                dets[index].aliment[2*i+1] += dets[index].bbox.y;
+                printf("%f,%f\n",dets[index].aliment[2*i],dets[index].aliment[2*i+1]);
+            }
         }
     }
 }
@@ -299,8 +393,8 @@ void forward_face_aliment_layer_gpu(const layer l, network net)
             activate_array_gpu(l.output_gpu + index, 2*l.w*l.h, LOGISTIC);
             index = entry_index(l, b, n*l.w*l.h, 4);
             activate_array_gpu(l.output_gpu + index,   l.w*l.h, LOGISTIC);
-            index = entry_index(l, b, n*l.w*l.h, 5);
-            activate_array_gpu(l.output_gpu + index,   136*l.w*l.h, TANH);
+            //index = entry_index(l, b, n*l.w*l.h, 5);
+            //activate_array_gpu(l.output_gpu + index,   136*l.w*l.h, TANH);
         }
     }
     if(!net.train || l.onlyforward){
@@ -324,8 +418,8 @@ void backward_face_aliment_layer_gpu(const layer l, network net)
             gradient_array_gpu(l.output_gpu + index, 2*l.w*l.h, LOGISTIC, l.delta_gpu + index);
             index = entry_index(l, b, n*l.w*l.h, 4);
             gradient_array_gpu(l.output_gpu + index,   l.w*l.h, LOGISTIC, l.delta_gpu + index);
-            index = entry_index(l, b, n*l.w*l.h, 5);
-            gradient_array_gpu(l.output_gpu + index, 136*l.w*l.h, TANH, l.delta_gpu + index);
+            //index = entry_index(l, b, n*l.w*l.h, 5);
+            //gradient_array_gpu(l.output_gpu + index, 136*l.w*l.h, TANH, l.delta_gpu + index);
         }
     }
     axpy_gpu(l.batch*l.inputs, 1, l.delta_gpu, 1, net.delta_gpu, 1);

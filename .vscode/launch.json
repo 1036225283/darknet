@@ -11,8 +11,10 @@
             "program": "${workspaceFolder}/darknet",
             "args": [
                 "face_aliment",
-                "train",
-                "cfg/face_aliment.cfg"
+                "test",
+                "cfg/face_aliment.cfg",
+                "~/work/data_set/helen/face_aliment_6000.weights",
+                "~/work/data_set/helen/testset/3002247460_1.jpg"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

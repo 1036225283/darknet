@@ -523,15 +523,10 @@ typedef struct detection{
     int classes;
     float *prob;
     float *mask;
+    float *aliment;
     float objectness;
     int sort_class;
 } detection;
-
-typedef struct aliment{
-    box bbox;
-    float objectness;
-    float *landmarks;
-} aliment;
 
 typedef struct matrix{
     int rows, cols;

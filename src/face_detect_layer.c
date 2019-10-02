@@ -180,7 +180,7 @@ void forward_face_detect_layer(const layer l, network net)
                     if (iou > 0.5) {
                         l.delta[obj_index] = 0;
                     }
-                    if(*(net.seen) < 1000){
+                    if(*(net.seen) < 3000){
                         box truth = {0};
                         truth.x = (i + .5)/l.w;
                         truth.y = (j + .5)/l.h;

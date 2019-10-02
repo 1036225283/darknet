@@ -56,7 +56,7 @@ void train_face_aliment(char *cfgfile, char *weightfile)
         avg_loss = avg_loss*.9 + loss*.1;
 
         printf("%d, loss: %f, avg: %f, rate: %f, seconds: %lf, images: %d \n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
-        if(i%1000==0 || (i < 1000 && i%100 == 0)){
+        if(i%1000==0 && i>0){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights", backup_directory, base, i);
             save_weights(net, buff);
@@ -71,7 +71,7 @@ void train_face_aliment(char *cfgfile, char *weightfile)
 
 void test_face_aliment(char *filename, char *weightfile,char *pic_path)
 {
-    int w=416,h=416;
+    int w=224,h=224;
     char *base = basecfg(filename);
     printf("%s\n", base);
     network *net = load_network(filename, weightfile, 0);
@@ -91,14 +91,15 @@ void test_face_aliment(char *filename, char *weightfile,char *pic_path)
         //printf("%f\n",dets[i].objectness);
         if(dets[i].objectness > thresh){
             box tmpb = dets[i].bbox;
-            draw_box(sized,tmpb.x, tmpb.y, tmpb.x+tmpb.w,tmpb.y+tmpb.h, 1, 0, 0);
+            draw_box(sized,tmpb.x, tmpb.y, tmpb.x+tmpb.w,tmpb.y+tmpb.h, 1.0, 0.0, 0.0);
+            draw_face_landmark_with_truth(sized,dets[i].aliment,5,1.0,0,0);
         }
     }
     
     free_detections(dets, nboxes);
 
 #ifdef OPENCV
-    make_window("predictions", 416, 416, 0);
+    make_window("predictions", w, h, 0);
     show_image(sized, "predictions", 0);
 #endif
 }

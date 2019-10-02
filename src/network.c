@@ -535,6 +535,7 @@ detection *make_network_boxes(network *net, float thresh, int *num)
         if(l.coords > 4){
             dets[i].mask = calloc(l.coords-4, sizeof(float));
         }
+        dets[i].aliment = calloc(136, sizeof(float));
     }
     return dets;
 }
@@ -558,6 +559,10 @@ void fill_network_boxes(network *net, int w, int h, float thresh, float hier, in
         }
         if(l.type == FACE_DETECT){
             get_face_detect_detections(l, w, h, thresh, dets);
+            dets += l.w*l.h*l.n;
+        }
+        if(l.type == FACE_ALIMENT){
+            get_face_aliment_detections(l, w, h, thresh, dets);
             dets += l.w*l.h*l.n;
         }
     }
