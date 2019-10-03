@@ -1479,7 +1479,7 @@ void draw_face_landmark_with_truth(image img,float *truth,int size,float r,float
 {
     int i=0,j=0;
     for(i=0;i<68;++i){
-        for(j=2;j<size;++j){
+        for(j=0;j<size;++j){
             draw_box(img, truth[i*2]-j, truth[i*2+1]-j, truth[i*2]+j, truth[i*2+1]+j, r, g, b);
         }
     }

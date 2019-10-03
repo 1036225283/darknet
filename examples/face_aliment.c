@@ -82,17 +82,17 @@ void test_face_aliment(char *filename, char *weightfile,char *pic_path)
 
     //parse and show result
     int nboxes = 0;
-    float thresh = 0.3;
+    float thresh = 0.6;
     detection *dets = get_network_boxes(net, sized.w, sized.h, thresh, 0, 0, 1, &nboxes);
     //printf("%d\n", nboxes);
     //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
-    do_nms_sort_simple(dets, nboxes, 0.2);
+    do_nms_sort_simple(dets, nboxes, 0.5);
     for(int i=0;i<nboxes;i++){
         //printf("%f\n",dets[i].objectness);
         if(dets[i].objectness > thresh){
             box tmpb = dets[i].bbox;
             draw_box(sized,tmpb.x, tmpb.y, tmpb.x+tmpb.w,tmpb.y+tmpb.h, 1.0, 0.0, 0.0);
-            draw_face_landmark_with_truth(sized,dets[i].aliment,5,1.0,0,0);
+            draw_face_landmark_with_truth(sized,dets[i].aliment,3,1.,1.,0);
         }
     }
     
