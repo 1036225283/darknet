@@ -1475,10 +1475,10 @@ void draw_face_landmark(image img,matrix pts,int size,float r,float g,float b)
     }
 }
 
-void draw_face_landmark_with_truth(image img,float *truth,int size,float r,float g,float b)
+void draw_face_landmark_with_truth(image img,float *truth,int size,float r,float g,float b,int len)
 {
     int i=0,j=0;
-    for(i=0;i<68;++i){
+    for(i=0;i<len;++i){
         for(j=0;j<size;++j){
             draw_box(img, truth[i*2]-j, truth[i*2+1]-j, truth[i*2]+j, truth[i*2+1]+j, r, g, b);
         }

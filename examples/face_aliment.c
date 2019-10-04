@@ -71,7 +71,7 @@ void train_face_aliment(char *cfgfile, char *weightfile)
 
 void test_face_aliment(char *filename, char *weightfile,char *pic_path)
 {
-    int w=224,h=224;
+    int w=448,h=448;
     char *base = basecfg(filename);
     printf("%s\n", base);
     network *net = load_network(filename, weightfile, 0);
@@ -92,7 +92,7 @@ void test_face_aliment(char *filename, char *weightfile,char *pic_path)
         if(dets[i].objectness > thresh){
             box tmpb = dets[i].bbox;
             draw_box(sized,tmpb.x, tmpb.y, tmpb.x+tmpb.w,tmpb.y+tmpb.h, 1.0, 0.0, 0.0);
-            draw_face_landmark_with_truth(sized,dets[i].aliment,3,1.,1.,0);
+            draw_face_landmark_with_truth(sized,dets[i].aliment,3,0,1.,0,5);
         }
     }
     

@@ -10,6 +10,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+// 30鼻尖
+// 36,39左眼左右
+// 42,45有眼左右
+// 48,54嘴巴左右
 float mean_face[136] = {
 1023.794428,1262.260007,
 1028.649637,1408.555036,
@@ -98,12 +102,12 @@ layer make_face_aliment_layer(int batch, int w, int h, int n)
     l.batch = batch;
     l.h = h;
     l.w = w;
-    l.c = n*141;
+    l.c = n*15;
     l.out_w = l.w;
     l.out_h = l.h;
     l.out_c = l.c;
     l.cost = calloc(1, sizeof(float));
-    l.outputs = h*w*n*141;
+    l.outputs = h*w*n*15;
     l.inputs = l.outputs;
     l.truths = 68*2;
     l.delta = calloc(batch*l.outputs, sizeof(float));
@@ -222,13 +226,38 @@ static box get_truth_box(float *y,int points)
     return b;
 }
 
-static float delta_face_landmars(box fbox, float *truth, float *pred, float *delta, int index, int stride, float scale)
+// 30鼻尖
+// 36,39左眼左右
+// 42,45有眼左右
+// 48,54嘴巴左右
+
+static void five_point(float *truth, float *data){
+    //鼻子
+    data[0] = truth[60];
+    data[1] = truth[61];
+    //左眼
+    data[2] = (truth[72]+truth[78])/2;
+    data[3] = (truth[73]+truth[79])/2;
+    //有眼
+    data[4] = (truth[84]+truth[90])/2;
+    data[5] = (truth[85]+truth[91])/2;
+    //左嘴角
+    data[6] = truth[96];
+    data[7] = truth[97];
+    //右嘴角
+    data[8] = truth[108];
+    data[9] = truth[109];
+}
+
+static float delta_face_landmars(box fbox, float *truth, float *pred, float *delta, int index, int w, int h, int stride, float scale)
 {
     int i;
     float diff = 0;
-    for(i=0;i<68;++i){
-        float tx = truth[i*2]-fbox.x;
-        float ty = truth[i*2+1]-fbox.y;
+    float data[10];
+    five_point(truth,data);
+    for(i=0;i<5;++i){
+        float tx = 2*(data[i*2] - fbox.x)/fbox.w;
+        float ty = 2*(data[i*2+1] - fbox.y)/fbox.h;
         //printf("tx=%f,ty=%f,box: %f,%f,%f,%f,truth: %f,%f\n",tx,ty,fbox.x,fbox.y,fbox.w,fbox.h,truth[i*2],truth[i*2+1]);
         delta[index + (i*2)*stride] = scale*(tx - pred[index + (i*2)*stride]);
         delta[index + (i*2+1)*stride] = scale*(ty - pred[index + (i*2+1)*stride]);
@@ -249,8 +278,8 @@ void forward_face_aliment_layer(const layer l, network net)
             activate_array(l.output + index, 2*l.w*l.h, LOGISTIC);
             index = entry_index(l, b, n*l.w*l.h, 4);
             activate_array(l.output + index,   l.w*l.h, LOGISTIC);
-            //index = entry_index(l, b, n*l.w*l.h, 5);
-            //activate_array(l.output + index,   l.truths*l.w*l.h, TANH);
+            index = entry_index(l, b, n*l.w*l.h, 5);
+            activate_array(l.output + index, 10*l.w*l.h, TANH);
         }
     }
 #endif
@@ -288,9 +317,9 @@ void forward_face_aliment_layer(const layer l, network net)
                         truth.w = mean.w;
                         truth.h = mean.h;
                         int box_index = entry_index(l, b, n*l.w*l.h + j*l.w + i, 0);
-                        delta_face_detect_box(truth, l.output, n, box_index, i, j, l.w, l.h, l.delta, 0.1, l.w*l.h);
+                        delta_face_detect_box(truth, l.output, n, box_index, i, j, l.w, l.h, l.delta, 0.01, l.w*l.h);
                         int landmarks_index = entry_index(l, b, n*l.w*l.h + j*l.w + i, 5);
-                        delta_face_landmars(truth, mean_face, l.output, l.delta, landmarks_index,l.w*l.h,0.1);
+                        delta_face_landmars(truth, mean_face, l.output, l.delta, landmarks_index, l.w, l.h, l.w*l.h,0.01);
                     }
                 }
             }
@@ -326,7 +355,7 @@ void forward_face_aliment_layer(const layer l, network net)
         avg_obj += l.output[obj_index];
         l.delta[obj_index] = l.object_scale*(1 - l.output[obj_index]);
         int landmarks_index = entry_index(l, b, best_n*l.w*l.h + j*l.w + i, 5);
-        float diff = delta_face_landmars(truth, net.truth+b*l.truths, l.output, l.delta, landmarks_index,l.w*l.h,1);
+        float diff = delta_face_landmars(truth, net.truth+b*l.truths, l.output, l.delta, landmarks_index, l.w, l.h, l.w*l.h,1);
         avg_landmark_diff += diff;
         ++count;
     }
@@ -352,6 +381,7 @@ void get_face_aliment_detections(layer l, int w, int h, float thresh, detection 
 {
     int i,j,n,z;
     float *predictions = l.output;
+    float data[10];
     for (i = 0; i < l.w*l.h; ++i){
         int row = i / l.w;
         int col = i % l.w;
@@ -362,13 +392,15 @@ void get_face_aliment_detections(layer l, int w, int h, float thresh, detection 
             dets[index].bbox = get_face_detect_box(predictions, n, box_index, col, row, l.w, l.h, l.w*l.h);
             dets[index].objectness = predictions[obj_index];
             dets[index].sort_class = 0;
-            for(int i=0;i<68;i++){
+            for(int i=0;i<5;i++){
                 int landmark_index  = entry_index(l, 0, index, (2*i)+5);
                 dets[index].aliment[2*i] = predictions[landmark_index];
+                dets[index].aliment[2*i] *= dets[index].bbox.w/2;
                 dets[index].aliment[2*i] += dets[index].bbox.x;
                 dets[index].aliment[2*i] *= w;
                 landmark_index  = entry_index(l, 0, index, (2*i+1)+5);
                 dets[index].aliment[2*i+1] = predictions[landmark_index];
+                dets[index].aliment[2*i+1] *= dets[index].bbox.h/2;
                 dets[index].aliment[2*i+1] += dets[index].bbox.y;
                 dets[index].aliment[2*i+1] *= h;
                 //printf("%f,%f\n",dets[index].aliment[2*i],dets[index].aliment[2*i+1]);
@@ -395,8 +427,8 @@ void forward_face_aliment_layer_gpu(const layer l, network net)
             activate_array_gpu(l.output_gpu + index, 2*l.w*l.h, LOGISTIC);
             index = entry_index(l, b, n*l.w*l.h, 4);
             activate_array_gpu(l.output_gpu + index,   l.w*l.h, LOGISTIC);
-            //index = entry_index(l, b, n*l.w*l.h, 5);
-            //activate_array_gpu(l.output_gpu + index, l.truths*l.w*l.h, TANH);
+            index = entry_index(l, b, n*l.w*l.h, 5);
+            activate_array_gpu(l.output_gpu + index, 10*l.w*l.h, TANH);
         }
     }
     if(!net.train || l.onlyforward){
@@ -420,8 +452,8 @@ void backward_face_aliment_layer_gpu(const layer l, network net)
             gradient_array_gpu(l.output_gpu + index, 2*l.w*l.h, LOGISTIC, l.delta_gpu + index);
             index = entry_index(l, b, n*l.w*l.h, 4);
             gradient_array_gpu(l.output_gpu + index,   l.w*l.h, LOGISTIC, l.delta_gpu + index);
-            //index = entry_index(l, b, n*l.w*l.h, 5);
-            //gradient_array_gpu(l.output_gpu + index, l.truths*l.w*l.h, TANH, l.delta_gpu + index);
+            index = entry_index(l, b, n*l.w*l.h, 5);
+            gradient_array_gpu(l.output_gpu + index, 10*l.w*l.h, TANH, l.delta_gpu + index);
         }
     }
     axpy_gpu(l.batch*l.inputs, 1, l.delta_gpu, 1, net.delta_gpu, 1);
