@@ -24,6 +24,7 @@ extern void run_lsd(int argc, char **argv);
 extern void run_mnist(int argc, char **argv);
 extern void run_face_aliment(int argc, char **argv);
 extern void run_face_detect(int argc, char **argv);
+extern void run_mseg(int argc, char **argv);
 
 void average(int argc, char *argv[])
 {
@@ -504,6 +505,8 @@ int main(int argc, char **argv)
         run_face_aliment(argc,argv);
     }else if (0 == strcmp(argv[1],"face_detect")){
         run_face_detect(argc,argv);
+    }else if (0 == strcmp(argv[1],"mseg")){
+        run_mseg(argc,argv);
     }else {
         fprintf(stderr, "Not an option: %s\n", argv[1]);
     }

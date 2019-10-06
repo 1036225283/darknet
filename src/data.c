@@ -813,6 +813,52 @@ image get_segmentation_image2(char *path, int w, int h, int classes)
     return mask;
 }
 
+
+data load_data_mseg(int n, char **paths, int m, int w, int h, int classes, int min, int max, float angle, float aspect, float hue, float saturation, float exposure, int div)
+{
+    static char *label_images = "/home/javer/Downloads/VOCtrainval_06-Nov-2007/VOCdevkit/VOC2007/SegmentationObject/";
+    static char *train_images = "/home/javer/Downloads/VOCtrainval_06-Nov-2007/VOCdevkit/VOC2007/JPEGImages/";
+    char train_img[256];
+    char label_img[256];
+    char **random_paths = get_random_paths(paths, n, m);
+    int i;
+    data d = {0};
+    d.shallow = 0;
+
+    d.X.rows = n;
+    d.X.vals = calloc(d.X.rows, sizeof(float*));
+    d.X.cols = h*w*3;
+
+
+    d.y.rows = n;
+    d.y.cols = h*w*3;
+    d.y.vals = calloc(d.X.rows, sizeof(float*));
+
+    for(i = 0; i < n; ++i){
+        sprintf(train_img,"%s%s%s",train_images,random_paths[i],".jpg");
+        sprintf(label_img,"%s%s%s",label_images,random_paths[i],".png");
+        image orig = load_image_color(train_img, 0, 0);
+        image label = load_image_color(label_img, 0, 0);
+
+        image sized_img = letterbox_image(orig, w, h);
+        image sized_label = letterbox_image(label, w, h);
+
+        d.X.vals[i] = sized_img.data;
+        d.y.vals[i] = sized_label.data;
+
+        free_image(orig);
+        free_image(label);
+
+        // image rgb = mask_to_rgb(sized_label);
+        // show_image(rgb, "part",0);
+        // show_image(sized_img, "orig",1);
+        // cvWaitKey(0);
+        // free_image(rgb);
+    }
+    free(random_paths);
+    return d;
+}
+
 data load_data_seg(int n, char **paths, int m, int w, int h, int classes, int min, int max, float angle, float aspect, float hue, float saturation, float exposure, int div)
 {
     char **random_paths = get_random_paths(paths, n, m);
@@ -1265,6 +1311,8 @@ void *load_thread(void *ptr)
         *a.d = load_data_tag(a.paths, a.n, a.m, a.classes, a.min, a.max, a.size, a.angle, a.aspect, a.hue, a.saturation, a.exposure);
     } else if (a.type == FACE_ALIMENT_DATA){
         *a.d = load_data_face_aliment(a.n, a.paths, a.m, a.w, a.h, a.jitter, a.hue, a.saturation, a.exposure);
+    } else if (a.type == MSEG_DATA){
+        *a.d = load_data_mseg(a.n, a.paths, a.m, a.w, a.h, a.classes, a.min, a.max, a.angle, a.aspect, a.hue, a.saturation, a.exposure, a.scale);
     }
     free(ptr);
     return 0;

@@ -10,11 +10,11 @@
             "request": "launch",
             "program": "${workspaceFolder}/darknet",
             "args": [
-                "face_aliment",
+                "mseg",
                 "test",
-                "cfg/face_aliment.cfg",
-                "~/work/data_set/helen/face_aliment_6000.weights",
-                "~/work/data_set/helen/testset/3002247460_1.jpg"
+                "cfg/mseg.cfg",
+                "/home/javer/Downloads/VOCtrainval_06-Nov-2007/VOCdevkit/mseg_1.weights",
+                "data/mseg.jpg"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

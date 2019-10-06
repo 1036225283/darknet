@@ -1110,6 +1110,7 @@ void save_weights_upto(network *net, char *filename, int cutoff)
             fwrite(l.weights, sizeof(float), size, fp);
         }
     }
+    fflush(fp);
     fclose(fp);
 }
 void save_weights(network *net, char *filename)

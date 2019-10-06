@@ -47,5 +47,5 @@ void randomize_data(data d);
 data *split_data(data d, int part, int total);
 data concat_datas(data *d, int n);
 void fill_truth(char *path, char **labels, int k, float *truth);
-
+data load_data_mseg(int n, char **paths, int m, int w, int h, int classes, int min, int max, float angle, float aspect, float hue, float saturation, float exposure, int div);
 #endif
