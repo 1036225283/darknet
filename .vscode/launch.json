@@ -13,7 +13,7 @@
                 "mseg",
                 "test",
                 "cfg/mseg.cfg",
-                "/home/javer/Downloads/VOCtrainval_06-Nov-2007/VOCdevkit/mseg_1.weights",
+                "model/mseg.weights",
                 "data/mseg.jpg"
             ],
             "stopAtEntry": false,
