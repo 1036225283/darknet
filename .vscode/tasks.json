@@ -1,15 +1,58 @@
 {
-    "tasks": [
+	"version": "2.0.0",
+	"tasks": [
         {
+            "label": "compile",
             "type": "shell",
-            "label": "gcc-7 build active file",
-            "command": "",
+            "command": "clang++",
             "args": [
+                "-std=c++17",
+                "-stdlib=libc++",
+                "user/show.c",
+                "-c",
+                "user",
+                "--debug"
             ],
-            "options": {
-                "cwd": "/usr/bin"
+            "group": {
+                "kind": "build",
+                "isDefault": true
             }
+        },
+        {
+            "label": "Build with Clang",
+            "type": "shell",
+            "command": "clang++",
+            "args": [
+                "-std=c++17",
+                "-stdlib=libc++",
+                "hello.c",
+                "-o",
+                "hello",
+                "--debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "debug",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "src/*.c",
+                "examples/*.c",
+                "-o",
+                "hello.sh",
+                "--debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
         }
-    ],
-    "version": "2.0.0"
+    ]
 }

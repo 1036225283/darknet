@@ -5,31 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "gcc-7 build and debug active file",
+            "name": "(lldb) 启动",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/darknet",
-            "args": [
-                "mseg",
-                "test",
-                "cfg/mseg.cfg",
-                "model/mseg.weights",
-                "data/mseg.jpg"
-            ],
+            "program": "${workspaceFolder}/hello.sh",
+            "args": ["detector","test"," cfg/coco.data","cfg/yolov3.cfg","yolov3.weights","data/dog.jpg"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "preLaunchTask": "gcc-7 build active file",
-            "miDebuggerPath": "/usr/bin/gdb"
+            "externalConsole": true,
+            "MIMode": "lldb"
         }
     ]
 }

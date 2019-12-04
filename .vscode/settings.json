@@ -1,11 +1,8 @@
 {
     "files.associations": {
-        "darknet.h": "c",
         "image.h": "c",
-        "list.h": "c",
-        "face_aliment_layer.h": "c",
-        "random": "c",
-        "face_detect_layer.h": "c"
-    },
-    "C_Cpp.errorSquiggles": "Disabled"
+        "data.h": "c",
+        "darknet.h": "c",
+        "list.h": "c"
+    }
 }

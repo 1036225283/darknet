@@ -1,7 +1,7 @@
 #include "darknet.h"
-#include "image.h"
-#include "data.h"
-#include "list.h"
+#include "../src/image.h"
+#include "../src/data.h"
+#include "../src/list.h"
 
 void train_face_detect(char *cfgfile, char *weightfile)
 {
